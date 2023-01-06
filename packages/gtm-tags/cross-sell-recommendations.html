@@ -1,0 +1,29 @@
+ <!-- Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved. -->
+ <!-- SPDX-License-Identifier: MIT-0 -->
+
+<script>
+  var crossSellRecommendations = function() {
+    var start = Date.now();
+    var end;
+    var fetch = {{fetch}};
+    var host = {{Page Hostname}};
+    var apiUrl = window['runtimeConfig'].apiUrl;
+    //var apiKey = window['runtimeConfig'].apiKey;
+    fetch(apiUrl + 'cross-sell-recommendations?user='+{{user}}+'&products=' + {{products}} , {
+      headers: {
+          //'x-api-key': apiKey
+      },
+    }).then(function(result) {
+      end = Date.now();
+     return result.json();
+    }).then(function(recommendations) {
+      //console.log('recommendations', recommendations)
+      var setCrossSellRecommendations = {{setCrossSellRecommendations}};
+      setCrossSellRecommendations({
+        recommendations: recommendations,
+        rtt: end - start,
+      });
+    }).catch(console.error);
+    return;
+}();
+</script>

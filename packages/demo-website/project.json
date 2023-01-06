@@ -1,0 +1,84 @@
+{
+  "name": "demo-website",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/demo-website/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "compiler": "babel",
+        "outputPath": "dist/packages/demo-website",
+        "index": "packages/demo-website/src/index.html",
+        "baseHref": "/",
+        "main": "packages/demo-website/src/main.tsx",
+        "polyfills": "packages/demo-website/src/polyfills.ts",
+        "tsConfig": "packages/demo-website/tsconfig.app.json",
+        "assets": [
+          "packages/demo-website/src/favicon.ico",
+          "packages/demo-website/src/assets"
+        ],
+        "styles": ["packages/demo-website/src/styles.css"],
+        "scripts": [],
+        "webpackConfig": "@nrwl/react/plugins/webpack"
+      },
+      "configurations": {
+        "development": {
+          "extractLicenses": false,
+          "optimization": false,
+          "sourceMap": true,
+          "vendorChunk": true
+        },
+        "production": {
+          "fileReplacements": [
+            {
+              "replace": "packages/demo-website/src/environments/environment.ts",
+              "with": "packages/demo-website/src/environments/environment.prod.ts"
+            }
+          ],
+          "optimization": true,
+          "outputHashing": "all",
+          "sourceMap": false,
+          "namedChunks": false,
+          "extractLicenses": true,
+          "vendorChunk": false
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nrwl/webpack:dev-server",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "demo-website:build",
+        "hmr": true
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "demo-website:build:development"
+        },
+        "production": {
+          "buildTarget": "demo-website:build:production",
+          "hmr": false
+        }
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/demo-website/**/*.{ts,tsx,js,jsx}"]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/packages/demo-website"],
+      "options": {
+        "jestConfig": "packages/demo-website/jest.config.ts",
+        "passWithNoTests": true
+      }
+    }
+  },
+  "tags": []
+}

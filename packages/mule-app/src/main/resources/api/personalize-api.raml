@@ -1,0 +1,58 @@
+#%RAML 1.0
+title: Personalize
+mediaType:
+  - text/plain
+  - application/json
+protocols:
+  - HTTP
+  - HTTPS
+/cross-sell-recommendations:
+  get:
+    displayName: Cross-sell recommendations
+    description: Get ranked cross sell recommendations based on items in cart
+    responses:
+      "200":
+        body:
+          items:
+            type: ProductRecommendation
+    queryParameters:
+      user:
+        type: string
+      products:
+        type: string
+/events:
+  put:
+    body:
+      type: UserEvent
+  post:
+    body:
+      type: UserEvent
+securedBy: []
+types:
+  UserEvent:
+    properties:
+      data:
+        properties:
+          user:
+            description: user identifier
+            type: string
+          session:
+            description: user session identifier
+            type: string
+          product:
+            description: product identifier
+            type: string
+      partitionKey:
+        description: amazon kinesis stream partition key
+        type: string
+  ProductRecommendation:
+    properties:
+      itemId:
+        description: product identifier
+        type: string
+      label:
+        description: product label
+        type: string
+      score:
+        description: recommendation score
+        type: string

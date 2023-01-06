@@ -1,0 +1,35 @@
+ <!-- Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved. -->
+ <!-- SPDX-License-Identifier: MIT-0 -->
+
+<script>
+  var putEvents = function() {
+    var page = {{Page Path}};
+    var product = page.replace('/product/','');
+    var user = {{user}};
+    var fetch = {{fetch}};
+    var host = {{Page Hostname}};
+    var body = JSON.stringify({
+      data: {
+        user: user,
+        session: user, //TODO: set this to the session id
+        product: product
+      },
+      partitionKey: product
+    });
+    //console.log('putting event', body);
+    var apiUrl = window['runtimeConfig'].apiUrl;
+    var apiKey = window['runtimeConfig'].apiKey;
+    fetch(apiUrl + 'events' , {
+      headers: {
+          'x-api-key': apiKey,
+          'Content-Type': 'application/json',
+      },
+      method: 'POST',
+      body: body,
+    }).catch(console.error)
+    //.then(function(result) {
+    // return result.json();
+    //}).then(console.log);
+    return;
+}();
+</script>

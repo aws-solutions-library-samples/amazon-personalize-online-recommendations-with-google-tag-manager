@@ -1,0 +1,226 @@
+ <!-- Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved. -->
+ <!-- SPDX-License-Identifier: MIT-0 -->
+
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:kinesis="http://www.mulesoft.org/schema/mule/kinesis"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:amazon-lambda="http://www.mulesoft.org/schema/mule/amazon-lambda"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd 
+http://www.mulesoft.org/schema/mule/amazon-lambda http://www.mulesoft.org/schema/mule/amazon-lambda/current/mule-amazon-lambda.xsd
+http://www.mulesoft.org/schema/mule/kinesis http://www.mulesoft.org/schema/mule/kinesis/current/mule-kinesis.xsd">
+	<configuration-properties
+		file="config.properties" doc:name="Configuration properties"
+		doc:id="1b359ae0-190f-49cd-8e06-e70b4fbff55c" />
+	<http:listener-config
+		name="personalize-api-httpListenerConfig">
+		<http:listener-connection host="0.0.0.0"
+			port="${https.port}" protocol="HTTPS">
+			<tls:context>
+				<tls:key-store path="keystore.jks"
+					keyPassword="${keystore.keypass}" password="${keystore.storepass}" alias="${keystore.alias}" />
+			</tls:context>
+		</http:listener-connection>
+		<http:listener-interceptors>
+			<http:cors-interceptor>
+				<http:origins>
+					<http:public-resource />
+				</http:origins>
+			</http:cors-interceptor>
+		</http:listener-interceptors>
+	</http:listener-config>
+	<apikit:config name="personalize-api-config"
+		api="personalize-api.raml" outboundHeadersMapName="outboundHeaders"
+		httpStatusVarName="httpStatus" />
+	<amazon-lambda:config
+		name="Amazon_Lambda_Connector_Config"
+		doc:name="Amazon Lambda Connector Config"
+		doc:id="35b0b089-b355-423f-a96f-c03ca4402710">
+		<amazon-lambda:connection
+			accessKey="${aws.accessKey}" secretKey="${aws.secretKey}" region="${aws.region}" />
+	</amazon-lambda:config>
+	<kinesis:config
+		name="Amazon_Kinesis_Data_Streams_Connector_Config"
+		doc:name="Amazon Kinesis Data Streams Connector Config"
+		doc:id="4296ebe7-7da5-4ad8-87ea-b0a8b66d804d">
+		<kinesis:connection accessKey="${aws.accessKey}"
+			secretKey="${aws.secretKey}" region="${aws.region}" />
+	</kinesis:config>
+	<flow name="personalize-api-main">
+		<http:listener
+			config-ref="personalize-api-httpListenerConfig" path="/api/*">
+			<http:response
+				statusCode="#[vars.httpStatus default 200]">
+				<http:body><![CDATA[#[payload]]]></http:body>
+				<http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+			</http:response>
+			<http:error-response
+				statusCode="#[vars.httpStatus default 500]">
+				<http:body><![CDATA[#[payload]]]></http:body>
+				<http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+			</http:error-response>
+		</http:listener>
+		<apikit:router config-ref="personalize-api-config" />
+		<error-handler>
+			<on-error-propagate type="APIKIT:BAD_REQUEST">
+				<ee:transform>
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Bad request"}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus">400
+						</ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+			<on-error-propagate type="APIKIT:NOT_FOUND">
+				<ee:transform>
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus">404
+						</ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+			<on-error-propagate
+				type="APIKIT:METHOD_NOT_ALLOWED">
+				<ee:transform>
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus">405
+						</ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+			<on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+				<ee:transform>
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus">406
+						</ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+			<on-error-propagate
+				type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+				<ee:transform>
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus">415
+						</ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+			<on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+				<ee:transform>
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus">501
+						</ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="personalize-api-console">
+		<http:listener
+			config-ref="personalize-api-httpListenerConfig" path="/console/*">
+			<http:response
+				statusCode="#[vars.httpStatus default 200]">
+				<http:headers>#[vars.outboundHeaders default {}]</http:headers>
+			</http:response>
+			<http:error-response
+				statusCode="#[vars.httpStatus default 500]">
+				<http:body>#[payload]</http:body>
+				<http:headers>#[vars.outboundHeaders default {}]</http:headers>
+			</http:error-response>
+		</http:listener>
+		<apikit:console config-ref="personalize-api-config" />
+		<error-handler>
+			<on-error-propagate type="APIKIT:NOT_FOUND">
+				<ee:transform>
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus">404
+						</ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="post:\events:text\plain:personalize-api-config">
+		<logger level="INFO"
+			message="post:\events:text\plain:personalize-api-config" />
+		<kinesis:put-record doc:name="Put Records"
+			doc:id="45f9a5ae-8d55-4f55-ae39-103bee68ae2e"
+			config-ref="Amazon_Kinesis_Data_Streams_Connector_Config"
+			streamName="${aws.kinesis.eventsStream}" />
+	</flow>
+	<flow
+		name="get:\cross-sell-recommendations:personalize-api-config">
+		<logger level="INFO"
+			message="get:\cross-sell-recommendations:personalize-api-config" />
+		<amazon-lambda:create20150331-functions-invocations-by-function-name
+			doc:name="Invoke" doc:id="a02510bf-5229-4f23-9363-182c0be6a503"
+			config-ref="Amazon_Lambda_Connector_Config"
+			functionName="${aws.lambda.crossSellRecommendations}">
+			<amazon-lambda:j_20150331-functions-invocations-content><![CDATA[#[%dw 2.0
+output application/json  
+---
+{
+  queryStringParameters: {
+    user: attributes.queryParams.user,
+    products: attributes.queryParams.products,
+  }
+}]]]></amazon-lambda:j_20150331-functions-invocations-content>
+		</amazon-lambda:create20150331-functions-invocations-by-function-name>
+		<ee:transform doc:name="Transform Message"
+			doc:id="ca1f9e9b-778a-4b7b-a795-1251c2475120">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+read(payload.body, "application/json")]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>

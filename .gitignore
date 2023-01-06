@@ -1,0 +1,7 @@
+node_modules
+dist
+.ipynb_checkpoints
+
+# CDK asset staging directory
+.cdk.staging
+cdk.out
