@@ -42,6 +42,7 @@ try {
     simSolutionVersion,
     itemsDataset,
     apiUrl,
+    description: 'Guidance for Real-Time Personalized Recommendations with Amazon Personalize on AWS (SO9118)'
   });
   Tags.of(app).add('Project', prefix);
   Aspects.of(app).add(new AwsSolutionsChecks({ reports: true }));
