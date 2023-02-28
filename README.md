@@ -11,13 +11,22 @@ Enhance customer experiences for online business with personalized recommendatio
 
 ## Setup
 
+### Clone repository
+```
+git clone https://github.com/aws-solutions-library-samples/amazon-personalize-online-recommendations-with-google-tag-manager.git
+```
+
 ### Setup Amazon Personalize
 Launch [Personalize Models.ipynb](packages/api/src/notebook/Personalize%20Models.ipynb) into Amazon SageMaker Notebook with `AdministratorAccess` (Note: For production usecase please apply least privilege permissions), and follow the instructions in the notebook to setup the required Amazon Personalize dataset, recommenders, and campaigns in your AWS Account. 
 
 ### Deploy the infrastructure
-See [API README.md](packages/api/README.md)
+Use this package to deploy the necessary AWS cloud infrastructure for Amazon API Gateway, AWS Lambda functions, and other resources that will serve as the connective tissue between Amazon Personalize and your website. 
+
+See [API README.md](packages/api/README.md) for instructions on how to set it up
 
 ## Setup Google Tag Manager
+Use this package's instructions and sample code for setting up the Google Tag Manager tags for your website
+
 See [GTM README.md](packages/gtm-tags/README.md)
 
 ## Security
