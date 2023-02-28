@@ -1,5 +1,5 @@
 # Google Tagmanager tags for real-time recommendations
-Instructions for setting up Google Tagmanager tags for use with the Amazon Personalize real-time recommendations demo
+Use the following instructions and sample code for setting up the Google Tag Manager tags for your website
 
 * Visit [Google Tagmanager](https://tagmanager.google.com/), and setup, and account, and container for the demo using instructions from [here](https://support.google.com/tagmanager/answer/6103696?hl=en). Copy the Container ID, and update the `gtmId` value in `demo-website/src/main.tsx`
 * Create the following triggers
